@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import api from '../api/axiosClient';
 import { ConfirmModal, useToast } from './NotificationToast';
+import PaginationControls from './PaginationControls';
 
 export default function CopropiedadesModulo({ user }) {
   const [unidades, setUnidades] = useState([]);
@@ -35,6 +36,12 @@ export default function CopropiedadesModulo({ user }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [notif, setNotif] = useState(null);
   const [confirmConfig, setConfirmConfig] = useState(null);
+
+  // Estados de Paginación
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(12);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   // Vista activa: null = Lista de Inmuebles, u = Detalle del Inmueble Seleccionado
   const [selectedUnidad, setSelectedUnidad] = useState(null);
@@ -102,11 +109,21 @@ export default function CopropiedadesModulo({ user }) {
     else toast.info(text);
   };
 
-  const fetchUnidades = async () => {
+  const fetchUnidades = async (pageTarget = page, sizeTarget = pageSize) => {
     try {
       setLoading(true);
-      const res = await api.get('/unidades');
-      setUnidades(res.data);
+      const res = await api.get(`/unidades?page=${pageTarget}&size=${sizeTarget}`);
+      if (res.data && res.data.content) {
+        setUnidades(res.data.content);
+        setPage(res.data.page);
+        setPageSize(res.data.size);
+        setTotalPages(res.data.totalPages);
+        setTotalElements(res.data.totalElements);
+      } else if (Array.isArray(res.data)) {
+        setUnidades(res.data);
+        setTotalElements(res.data.length);
+        setTotalPages(1);
+      }
     } catch (err) {
       console.error("Error al cargar inmuebles:", err);
       showNotif('error', 'Error al cargar el directorio de inmuebles.');
@@ -116,8 +133,8 @@ export default function CopropiedadesModulo({ user }) {
   };
 
   useEffect(() => {
-    fetchUnidades();
-  }, []);
+    fetchUnidades(page, pageSize);
+  }, [page, pageSize]);
 
   const fetchHabitantesUnidad = async (unidadId) => {
     try {
@@ -1051,6 +1068,23 @@ export default function CopropiedadesModulo({ user }) {
                 );
               })}
             </div>
+          )}
+
+          {/* Controles de Paginación */}
+          {!loading && totalElements > 0 && (
+            <PaginationControls
+              currentPage={page}
+              totalPages={totalPages}
+              totalElements={totalElements}
+              pageSize={pageSize}
+              pageSizeOptions={[12, 24, 48, 96]}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setPage(0);
+              }}
+              itemName="inmuebles"
+            />
           )}
         </div>
       ) : (
