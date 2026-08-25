@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply text-slate-100 font-sans antialiased min-h-screen selection:bg-cyan-500 selection:text-white;
+    background: linear-gradient(135deg, #000000 0%, #021a44 35%, #0b54bd 70%, #000511 100%) fixed !important;
+  }
+}
+
+/* Fondo degradado vibrante e intenso para la pantalla de login */
+.bg-tech-gradient {
+  background: linear-gradient(135deg, #000000 0%, #021a44 35%, #0b54bd 70%, #000511 100%) fixed !important;
+  position: relative;
+}
+
+.bg-grid-texture {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-diagonal-lines {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 24px,
+    rgba(30, 144, 255, 0.025) 24px,
+    rgba(30, 144, 255, 0.025) 25px
+  );
+}
+
+/* Paneles glassmorphism mejorados para la combinación negro-azul */
+.glass-panel {
+  background: rgba(3, 14, 33, 0.82);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(30, 144, 255, 0.28);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(13, 71, 161, 0.3);
+}
+
+.glass-card {
+  background: rgba(2, 8, 20, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+

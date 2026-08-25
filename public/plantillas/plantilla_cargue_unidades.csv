@@ -1,0 +1,7 @@
+torre,numeroUnidad,coeficiente,cedulaPropietario,nombrePropietario,emailPropietario,telefonoPropietario,documentoApoderado
+1,101,20.0,10101010,Carlos Pérez,carlos.perez@gmail.com,3001234567,
+1,102,25.0,20202020,María Rodríguez,maria.rodriguez@gmail.com,3002345678,
+2,201,15.0,30303030,Juan Gómez,juan.gomez@gmail.com,3003456789,
+2,202,15.0,40404040,Ana Martínez,ana.martinez@gmail.com,3004567890,
+3,301,10.0,50505050,Roberto Silva,roberto.silva@gmail.com,3005678901,77777777
+3,302,15.0,60606060,Laura Morales,laura.morales@gmail.com,3006789012,
