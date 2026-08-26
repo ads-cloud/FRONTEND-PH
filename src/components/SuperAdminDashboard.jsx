@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import api from '../api/axiosClient';
 import { useToast } from './NotificationToast';
+import PaginationControls from './PaginationControls';
 import { 
   Building2, PlusCircle, ShieldCheck, UserPlus, Building, Lock, AlertCircle, 
   CheckCircle2, RefreshCw, User, Phone, Mail, Edit3, FileText, Activity, 
@@ -43,6 +44,16 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   const [copropiedades, setCopropiedades] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados de Paginación de Copropiedades (Pestaña PH)
+  const [pageCop, setPageCop] = useState(0);
+  const [pageSizeCop, setPageSizeCop] = useState(6);
+  const [totalPagesCop, setTotalPagesCop] = useState(1);
+  const [totalElementsCop, setTotalElementsCop] = useState(0);
+
+  // Estados de Paginación para Monitoreo PH (Pestaña Monitoreo)
+  const [pagePh, setPagePh] = useState(0);
+  const [pageSizePh, setPageSizePh] = useState(6);
+
   const [liveHealth, setLiveHealth] = useState(health);
   const [refreshingEmailCard, setRefreshingEmailCard] = useState(false);
   const [refreshingRabbitCard, setRefreshingRabbitCard] = useState(false);
@@ -57,9 +68,9 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   const [searchModuloTerm, setSearchModuloTerm] = useState('');
   const [searchPhTerm, setSearchPhTerm] = useState('');
   const [searchConjuntoTerm, setSearchConjuntoTerm] = useState('');
-  // Estados para secciones principales colapsables por defecto colapsadas (false)
-  const [showInfraSection, setShowInfraSection] = useState(false);
-  const [showPhSection, setShowPhSection] = useState(false);
+  // Estados para secciones colapsables: Infraestructura visible por defecto (true)
+  const [showInfraSection, setShowInfraSection] = useState(true);
+  const [showPhSection, setShowPhSection] = useState(true);
 
   useEffect(() => {
     // Al cargar el componente o cambiar a la pestaña de monitoreo, obtener datos frescos
@@ -96,11 +107,21 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   const [telefonoAdmin, setTelefonoAdmin] = useState('');
   const [assigningAdmin, setAssigningAdmin] = useState(false);
 
-  const fetchCopropiedades = async () => {
+  const fetchCopropiedades = async (pageTarget = pageCop, sizeTarget = pageSizeCop) => {
     setLoading(true);
     try {
-      const res = await api.get('/copropiedades');
-      setCopropiedades(res.data);
+      const res = await api.get(`/copropiedades?page=${pageTarget}&size=${sizeTarget}`);
+      if (res.data && res.data.content) {
+        setCopropiedades(res.data.content);
+        setPageCop(res.data.page);
+        setPageSizeCop(res.data.size);
+        setTotalPagesCop(res.data.totalPages);
+        setTotalElementsCop(res.data.totalElements);
+      } else if (Array.isArray(res.data)) {
+        setCopropiedades(res.data);
+        setTotalElementsCop(res.data.length);
+        setTotalPagesCop(1);
+      }
     } catch (err) {
       console.error("[SuperAdminDashboard] Error al cargar copropiedades:", err);
       const detalleError = err.response?.data?.message || err.message || "Error de conexión con el servidor.";
@@ -111,8 +132,8 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   };
 
   useEffect(() => {
-    fetchCopropiedades();
-  }, []);
+    fetchCopropiedades(pageCop, pageSizeCop);
+  }, [pageCop, pageSizeCop]);
 
   const handleCrearCopropiedad = async (e) => {
     e.preventDefault();
@@ -532,135 +553,160 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
             {/* Contenido Desplegable de Monitoreo por PH */}
             {showPhSection && (
               <div className="p-6 pt-0 border-t border-slate-800/80 animate-fadeIn">
-                {(liveHealth?.copropiedadesMonitoreo?.length > 0 || copropiedades?.length > 0) ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
-                    {(liveHealth?.copropiedadesMonitoreo && liveHealth.copropiedadesMonitoreo.length > 0 
-                      ? liveHealth.copropiedadesMonitoreo 
-                      : copropiedades.map(c => ({
-                          copropiedadId: c.id,
-                          copropiedadNombre: c.nombre,
-                          nit: c.nit,
-                          unidadesRegistradas: c.unidadesPrivadas?.length || 0,
-                          usuariosActivos: c.administradores?.length || 0
-                        }))
-                    )
-                    .filter(ph => {
-                      if (!searchPhTerm.trim()) return true;
-                      const term = searchPhTerm.toLowerCase().trim();
-                      const nombre = (ph.copropiedadNombre || ph.nombre || '').toLowerCase();
-                      const nit = (ph.nit || '').toLowerCase();
-                      return nombre.includes(term) || nit.includes(term);
-                    })
-                    .map((ph) => {
-                      const cardId = ph.copropiedadId || ph.id;
+                    {(() => {
+                      const allPhs = (liveHealth?.copropiedadesMonitoreo && liveHealth.copropiedadesMonitoreo.length > 0 
+                        ? liveHealth.copropiedadesMonitoreo 
+                        : copropiedades.map(c => ({
+                            copropiedadId: c.id,
+                            copropiedadNombre: c.nombre,
+                            nit: c.nit,
+                            unidadesRegistradas: c.unidadesPrivadas?.length || 0,
+                            usuariosActivos: c.administradores?.length || 0
+                          }))
+                      )
+                      .filter(ph => {
+                        if (!searchPhTerm.trim()) return true;
+                        const term = searchPhTerm.toLowerCase().trim();
+                        const nombre = (ph.copropiedadNombre || ph.nombre || '').toLowerCase();
+                        const nit = (ph.nit || '').toLowerCase();
+                        return nombre.includes(term) || nit.includes(term);
+                      });
+
+                      const totalPhs = allPhs.length;
+                      const totalPagesPhCalculated = Math.max(1, Math.ceil(totalPhs / pageSizePh));
+                      const safePagePh = Math.min(pagePh, totalPagesPhCalculated - 1);
+                      const paginatedPhs = allPhs.slice(safePagePh * pageSizePh, (safePagePh + 1) * pageSizePh);
 
                       return (
-                        <div key={cardId} className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 hover:border-slate-700 transition-colors shadow-lg">
-                          <div className="flex items-start justify-between pb-3 border-b border-slate-800/80">
-                            <div>
-                              <h5 className="font-bold text-white text-sm flex items-center gap-2">
-                                {ph.copropiedadNombre || ph.nombre}
-                                {ph.tieneAsambleaActiva && (
-                                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Asamblea activa en curso" />
-                                )}
-                              </h5>
-                              <p className="text-[11px] text-slate-400 font-mono mt-0.5">NIT: {formatNit(ph.nit)}</p>
-                            </div>
-                            <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
-                              <Building2 className="w-4 h-4" />
-                            </span>
+                        <>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-4">
+                            {paginatedPhs.map((ph) => {
+                              const cardId = ph.copropiedadId || ph.id;
+
+                              return (
+                                <div key={cardId} className="p-5 bg-slate-950 border border-slate-800 rounded-2xl space-y-4 hover:border-slate-700 transition-colors shadow-lg">
+                                  <div className="flex items-start justify-between pb-3 border-b border-slate-800/80">
+                                    <div>
+                                      <h5 className="font-bold text-white text-sm flex items-center gap-2">
+                                        {ph.copropiedadNombre || ph.nombre}
+                                        {ph.tieneAsambleaActiva && (
+                                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="Asamblea activa en curso" />
+                                        )}
+                                      </h5>
+                                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">NIT: {formatNit(ph.nit)}</p>
+                                    </div>
+                                    <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+                                      <Building2 className="w-4 h-4" />
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
+                                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                        Unidades Registradas
+                                      </span>
+                                      <span className="block text-2xl font-black text-white font-mono">
+                                        {ph.unidadesRegistradas ?? 0}
+                                      </span>
+                                    </div>
+
+                                    <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
+                                      <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                        Usuarios Activos
+                                      </span>
+                                      <span className="block text-2xl font-black text-emerald-400 font-mono">
+                                        {ph.usuariosActivos ?? 0}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Sección de Asamblea Activa (si existe) */}
+                                  {ph.tieneAsambleaActiva ? (
+                                    <div className="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
+                                          <Activity className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+                                          Asamblea Activa
+                                        </span>
+                                        
+                                        <div className="flex items-center gap-2">
+                                          <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
+                                            ph.asambleaEstado === 'EN_CURSO'
+                                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                                              : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                                          }`}>
+                                            {ph.asambleaEstado === 'EN_CURSO' ? '🟢 EN CURSO' : '🟡 CONVOCADA'}
+                                          </span>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => fetchHealthData('all')}
+                                            className="p-1 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all cursor-pointer"
+                                            title={`Actualizar métricas de ${ph.copropiedadNombre || 'la PH'}`}
+                                          >
+                                            <RefreshCw className="w-3.5 h-3.5" />
+                                          </button>
+                                        </div>
+                                      </div>
+
+                                      <div className="pt-1.5 border-t border-indigo-500/20 space-y-1 text-[11px]">
+                                        <div className="flex items-center justify-between text-slate-400">
+                                          <span>Asistentes registrados:</span>
+                                          <span className="font-bold text-emerald-400 font-mono">{ph.asistentesQuorum ?? 0} quórum</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-slate-400">
+                                          <span>Ingreso de Votos:</span>
+                                          <span className="font-bold text-purple-300 font-mono flex items-center gap-1">
+                                            <Vote className="w-3 h-3 text-purple-400" />
+                                            {ph.votosRegistrados ?? 0} votos
+                                          </span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="px-3 py-2 bg-slate-900/40 border border-slate-800/60 rounded-xl flex items-center justify-between text-[11px] text-slate-500">
+                                      <span>Estado Asamblea:</span>
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-semibold text-slate-400">Sin asamblea activa</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => fetchHealthData('all')}
+                                          className="p-1 text-slate-500 hover:text-slate-300 rounded-lg transition-all cursor-pointer"
+                                          title="Actualizar estado"
+                                        >
+                                          <RefreshCw className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
-                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                Unidades Registradas
-                              </span>
-                              <span className="block text-2xl font-black text-white font-mono">
-                                {ph.unidadesRegistradas ?? 0}
-                              </span>
-                            </div>
-
-                            <div className="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
-                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                Usuarios Activos
-                              </span>
-                              <span className="block text-2xl font-black text-emerald-400 font-mono">
-                                {ph.usuariosActivos ?? 0}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Sección de Asamblea Activa (si existe) */}
-                          {ph.tieneAsambleaActiva ? (
-                            <div className="p-3 bg-indigo-950/40 border border-indigo-500/30 rounded-xl space-y-2">
-                              <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1">
-                                  <Activity className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
-                                  Asamblea Activa
-                                </span>
-                                
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${
-                                    ph.asambleaEstado === 'EN_CURSO'
-                                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                                      : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
-                                  }`}>
-                                    {ph.asambleaEstado === 'EN_CURSO' ? '🟢 EN CURSO' : '🟡 CONVOCADA'}
-                                  </span>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => fetchHealthData('all')}
-                                    className="p-1 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition-all cursor-pointer"
-                                    title={`Actualizar métricas de ${ph.copropiedadNombre || 'la PH'}`}
-                                  >
-                                    <RefreshCw className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="pt-1.5 border-t border-indigo-500/20 space-y-1 text-[11px]">
-                                <div className="flex items-center justify-between text-slate-400">
-                                  <span>Asistentes registrados:</span>
-                                  <span className="font-bold text-emerald-400 font-mono">{ph.asistentesQuorum ?? 0} quórum</span>
-                                </div>
-
-                                <div className="flex items-center justify-between text-slate-400">
-                                  <span>Ingreso de Votos:</span>
-                                  <span className="font-bold text-purple-300 font-mono flex items-center gap-1">
-                                    <Vote className="w-3 h-3 text-purple-400" />
-                                    {ph.votosRegistrados ?? 0} votos
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="px-3 py-2 bg-slate-900/40 border border-slate-800/60 rounded-xl flex items-center justify-between text-[11px] text-slate-500">
-                              <span>Estado Asamblea:</span>
-                              <div className="flex items-center gap-2">
-                                <span className="font-semibold text-slate-400">Sin asamblea activa</span>
-                                <button
-                                  type="button"
-                                  onClick={() => fetchHealthData('all')}
-                                  className="p-1 text-slate-500 hover:text-slate-300 rounded-lg transition-all cursor-pointer"
-                                  title="Actualizar estado"
-                                >
-                                  <RefreshCw className="w-3 h-3" />
-                                </button>
-                              </div>
+                          {/* Paginador de Monitoreo por PH */}
+                          {totalPhs > 0 && (
+                            <div className="pt-4">
+                              <PaginationControls
+                                currentPage={safePagePh}
+                                totalPages={totalPagesPhCalculated}
+                                totalElements={totalPhs}
+                                pageSize={pageSizePh}
+                                pageSizeOptions={[6, 12, 24, 48]}
+                                onPageChange={(newPage) => setPagePh(newPage)}
+                                onPageSizeChange={(newSize) => {
+                                  setPageSizePh(newSize);
+                                  setPagePh(0);
+                                }}
+                                itemName="PHs en monitoreo"
+                              />
                             </div>
                           )}
-                        </div>
+                        </>
                       );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-6 text-center text-slate-500 text-xs bg-slate-950 border border-slate-800 rounded-2xl mt-4">
-                    No se encontraron datos de monitoreo para las propiedades horizontales.
-                  </div>
-                )}
+                    })()}
               </div>
             )}
           </div>
@@ -1015,6 +1061,25 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
                 );
               })
             )}
+            </div>
+          )}
+
+          {/* Controles de Paginación de Copropiedades */}
+          {!loading && totalElementsCop > 0 && (
+            <div className="pt-2">
+              <PaginationControls
+                currentPage={pageCop}
+                totalPages={totalPagesCop}
+                totalElements={totalElementsCop}
+                pageSize={pageSizeCop}
+                pageSizeOptions={[6, 12, 24, 48]}
+                onPageChange={(newPage) => setPageCop(newPage)}
+                onPageSizeChange={(newSize) => {
+                  setPageSizeCop(newSize);
+                  setPageCop(0);
+                }}
+                itemName="conjuntos residenciales"
+              />
             </div>
           )}
         </div>
