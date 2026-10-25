@@ -8,7 +8,6 @@ export default function LoginForm({ onLoginSuccess, health }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // Estados para restauración de contraseña
   const [isResetMode, setIsResetMode] = useState(false);
@@ -18,13 +17,10 @@ export default function LoginForm({ onLoginSuccess, health }) {
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [confirmarPassword, setConfirmarPassword] = useState('');
   const [resetLoading, setResetLoading] = useState(false);
-  const [resetMsg, setResetMsg] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [resetError, setResetError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -58,7 +54,6 @@ export default function LoginForm({ onLoginSuccess, health }) {
           : err.message)
         || 'Nombre de usuario o contraseña incorrectos.';
 
-      setError(detailedMessage);
       toast.error(detailedMessage, 'Error de Autenticación');
     } finally {
       setLoading(false);
@@ -69,17 +64,13 @@ export default function LoginForm({ onLoginSuccess, health }) {
     e.preventDefault();
     if (!documentoReset.trim()) return;
     setResetLoading(true);
-    setResetError('');
-    setResetMsg('');
 
     try {
       const res = await api.post('/auth/reset-password/solicitar-pin', { documento: documentoReset.trim() });
-      setResetMsg(res.data.message);
-      toast.success(res.data.message, 'Código PIN Generado');
+      toast.success(res.data.message || 'Código PIN generado y enviado.', 'Código PIN Generado');
       setResetStep(2);
     } catch (err) {
       const msg = err.response?.data?.message || 'Error al solicitar el código PIN.';
-      setResetError(msg);
       toast.error(msg, 'Error de Restablecimiento');
     } finally {
       setResetLoading(false);
@@ -90,15 +81,14 @@ export default function LoginForm({ onLoginSuccess, health }) {
     e.preventDefault();
     if (!pinReset.trim()) return;
     setResetLoading(true);
-    setResetError('');
-    setResetMsg('');
 
     try {
       const res = await api.post('/auth/reset-password/verificar-pin', { documento: documentoReset.trim(), pin: pinReset.trim() });
-      setResetMsg(res.data.message);
+      toast.success(res.data.message || 'PIN verificado correctamente.', 'PIN Válido');
       setResetStep(3);
     } catch (err) {
-      setResetError(err.response?.data?.message || err.message || 'PIN inválido o expirado.');
+      const msg = err.response?.data?.message || err.message || 'PIN inválido o expirado.';
+      toast.error(msg, 'Error de Verificación');
     } finally {
       setResetLoading(false);
     }
@@ -108,17 +98,15 @@ export default function LoginForm({ onLoginSuccess, health }) {
     e.preventDefault();
     if (!nuevaPassword.trim()) return;
     if (nuevaPassword !== confirmarPassword) {
-      setResetError('Las contraseñas no coinciden.');
+      toast.error('Las contraseñas no coinciden.', 'Validación');
       return;
     }
     if (nuevaPassword.length < 6) {
-      setResetError('La contraseña debe tener al menos 6 caracteres.');
+      toast.error('La contraseña debe tener al menos 6 caracteres.', 'Validación');
       return;
     }
 
     setResetLoading(true);
-    setResetError('');
-    setResetMsg('');
 
     try {
       const res = await api.post('/auth/reset-password/confirmar', {
@@ -126,7 +114,7 @@ export default function LoginForm({ onLoginSuccess, health }) {
         pin: pinReset.trim(),
         nuevaPassword: nuevaPassword.trim()
       });
-      setResetMsg(res.data.message);
+      toast.success(res.data.message || 'Contraseña actualizada exitosamente.', 'Operación Exitosa');
       setTimeout(() => {
         setIsResetMode(false);
         setResetStep(1);
@@ -134,10 +122,10 @@ export default function LoginForm({ onLoginSuccess, health }) {
         setPinReset('');
         setNuevaPassword('');
         setConfirmarPassword('');
-        setResetMsg('');
-      }, 3000);
+      }, 2000);
     } catch (err) {
-      setResetError(err.response?.data?.message || err.message || 'Error al restablecer la contraseña.');
+      const msg = err.response?.data?.message || err.message || 'Error al restablecer la contraseña.';
+      toast.error(msg, 'Error al Restablecer');
     } finally {
       setResetLoading(false);
     }
@@ -163,45 +151,6 @@ export default function LoginForm({ onLoginSuccess, health }) {
         {/* Línea superior con gradiente de acento azul cian */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-600" />
 
-        {/* Notificaciones estilo Toast exacto al de la imagen */}
-        {(error || resetError) && (
-          <div className="glass-panel p-4 rounded-2xl border border-amber-500/40 bg-slate-900/95 text-amber-200 shadow-xl flex items-start gap-3 w-full backdrop-blur-md animate-fadeIn transition-all">
-            <div className="mt-0.5">
-              <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0" />
-            </div>
-            <div className="flex-1 min-w-0 pr-1">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-0.5">AUTENTICACIÓN REQUERIDA</h4>
-              <p className="text-xs leading-relaxed font-medium text-amber-200">{error || resetError}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => { setError(''); setResetError(''); }}
-              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
-        {resetMsg && (
-          <div className="glass-panel p-4 rounded-2xl border border-emerald-500/40 bg-slate-900/95 text-emerald-200 shadow-xl flex items-start gap-3 w-full backdrop-blur-md animate-fadeIn transition-all">
-            <div className="mt-0.5">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-            </div>
-            <div className="flex-1 min-w-0 pr-1">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-0.5">OPERACIÓN EXITOSA</h4>
-              <p className="text-xs leading-relaxed font-medium text-emerald-200">{resetMsg}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setResetMsg('')}
-              className="p-1 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors flex-shrink-0"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         {/* MODO RESTAURACIÓN DE CONTRASEÑA */}
         {isResetMode ? (
           <div className="space-y-5 animate-fadeIn">
@@ -214,8 +163,6 @@ export default function LoginForm({ onLoginSuccess, health }) {
                 onClick={() => {
                   setIsResetMode(false);
                   setResetStep(1);
-                  setResetError('');
-                  setResetMsg('');
                 }}
                 className="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors font-medium"
               >
@@ -378,9 +325,6 @@ export default function LoginForm({ onLoginSuccess, health }) {
                   onClick={() => {
                     setIsResetMode(true);
                     setResetStep(1);
-                    setError('');
-                    setResetError('');
-                    setResetMsg('');
                   }}
                   className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold transition-colors"
                 >

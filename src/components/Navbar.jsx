@@ -11,6 +11,28 @@ export default function Navbar({ activeView, setActiveView, user, onLogout, heal
     sessionStorage.getItem('active_copropiedad_id') || localStorage.getItem('active_copropiedad_id') || '1'
   );
 
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const userMenuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   useEffect(() => {
     if (!isSuperAdmin) {
       const fetchCopropiedades = async () => {
@@ -134,44 +156,66 @@ export default function Navbar({ activeView, setActiveView, user, onLogout, heal
               </div>
             )}
 
-            {/* Ícono de Usuario con Tooltip desplegable al pasar el mouse */}
-            <div className="relative group pl-2 sm:pl-3 border-l border-slate-800">
+            {/* Ícono de Usuario con menú desplegable al hacer clic */}
+            <div ref={userMenuRef} className="relative pl-2 sm:pl-3 border-l border-slate-800">
               <button
                 type="button"
-                onClick={() => onSelectModule && onSelectModule('perfil')}
-                className="p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/50 text-indigo-300 hover:text-white transition-all shadow-sm flex items-center justify-center cursor-pointer"
-                title="Ver Perfil de Usuario"
+                onClick={() => setShowUserMenu(prev => !prev)}
+                className={`p-2 rounded-xl border transition-all shadow-sm flex items-center justify-center cursor-pointer ${
+                  showUserMenu
+                    ? 'bg-indigo-600/30 text-white border-indigo-500/60 shadow-indigo-500/20 ring-2 ring-indigo-500/30'
+                    : 'bg-slate-900/90 hover:bg-slate-800 border-slate-800 hover:border-indigo-500/50 text-indigo-300 hover:text-white'
+                }`}
+                title="Menú de Usuario"
+                aria-expanded={showUserMenu}
               >
                 <User className="w-4 h-4 text-indigo-400" />
               </button>
 
-              {/* Tooltip Card Desplegable en Hover */}
-              <div className="absolute right-0 top-full mt-2 w-64 p-4 rounded-2xl bg-slate-950/95 border border-indigo-500/30 shadow-2xl backdrop-blur-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 space-y-3 pointer-events-none group-hover:pointer-events-auto">
-                <div className="flex items-center gap-3 border-b border-slate-800 pb-3">
-                  <div className="p-2.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-black text-sm shrink-0">
-                    <User className="w-4 h-4 text-white" />
+              {/* Menú Desplegable con Click */}
+              {showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 w-64 p-4 rounded-2xl bg-slate-950/98 border border-indigo-500/40 shadow-2xl shadow-indigo-950/80 backdrop-blur-2xl z-50 space-y-3 animate-fadeIn">
+                  <div className="flex items-center gap-3 border-b border-slate-800/80 pb-3">
+                    <div className="p-2.5 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-black text-sm shrink-0 shadow-md shadow-indigo-500/20">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-extrabold text-white text-xs truncate">
+                        {user?.nombreCompleto || user?.username || 'Usuario'}
+                      </h4>
+                      <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        {getRolBadge()}
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h4 className="font-extrabold text-white text-xs truncate">
-                      {user?.nombreCompleto || user?.username || 'Usuario'}
-                    </h4>
-                    <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      {getRolBadge()}
-                    </span>
-                  </div>
-                </div>
 
-                <div className="space-y-1.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={onLogout}
-                    className="w-full px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-600/30 border border-rose-500/30 hover:border-rose-500/60 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                  >
-                    <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Cerrar Sesión</span>
-                  </button>
+                  <div className="space-y-1.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        if (onSelectModule) onSelectModule('perfil');
+                      }}
+                      className="w-full px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900/80 hover:bg-slate-800 border border-slate-800 hover:border-indigo-500/40 transition-all flex items-center justify-start gap-2.5 cursor-pointer shadow-sm"
+                    >
+                      <User className="w-3.5 h-3.5 text-indigo-400" />
+                      <span>Mi Perfil</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onLogout();
+                      }}
+                      className="w-full px-3 py-2 rounded-xl text-xs font-bold text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-600/30 border border-rose-500/30 hover:border-rose-500/60 transition-all flex items-center justify-start gap-2.5 cursor-pointer shadow-sm"
+                    >
+                      <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Cerrar Sesión</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         )}

@@ -902,9 +902,17 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
                               setTodosModulosSistema(resAll.data);
                               const resPh = await api.get(`/modulos/copropiedad/${cop.id}`);
                               const mapActivos = {};
-                              resPh.data.forEach(cm => {
-                                mapActivos[cm.modulo.id] = cm.activo;
-                              });
+                              if (resPh.data && resPh.data.length > 0) {
+                                resPh.data.forEach(cm => {
+                                  if (cm.modulo && cm.modulo.id) {
+                                    mapActivos[cm.modulo.id] = cm.activo === true;
+                                  }
+                                });
+                              } else {
+                                resAll.data.forEach(m => {
+                                  mapActivos[m.id] = true;
+                                });
+                              }
                               setModulosPhState(mapActivos);
                               setShowModulosModal(true);
                             } catch (e) {
@@ -1267,6 +1275,9 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
                   setShowModulosModal(false);
                   setSelectedCopForModulos(null);
                   setSearchModuloTerm('');
+                  if (typeof fetchCopropiedades === 'function') {
+                    await fetchCopropiedades();
+                  }
                 } catch (err) {
                   console.error("Error al guardar módulos de la PH:", err);
                   const errMsg = "No se pudieron guardar los permisos de los módulos para la PH.";
