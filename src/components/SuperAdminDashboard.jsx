@@ -7,7 +7,7 @@ import {
   Building2, PlusCircle, ShieldCheck, UserPlus, Building, Lock, AlertCircle, 
   CheckCircle2, RefreshCw, User, Phone, Mail, Edit3, FileText, Activity, 
   Database, Radio, Server, SlidersHorizontal, X, Check, Search, Vote, 
-  Megaphone, CreditCard, MessageSquare, Settings, MailCheck, Clock, AlertTriangle, Layers, ChevronDown, ChevronRight 
+  Megaphone, CreditCard, MessageSquare, Settings, MailCheck, Clock, AlertTriangle, Layers, ChevronDown, ChevronRight, Sparkles, Play, Pause, Power 
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -92,6 +92,28 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
     }
   };
 
+  const [togglingNotificaciones, setTogglingNotificaciones] = useState(false);
+
+  const handleToggleNotificaciones = async () => {
+    try {
+      setTogglingNotificaciones(true);
+      const res = await api.post('/health/notificaciones/toggle');
+      const activo = res.data?.activo;
+      const msg = res.data?.message || (activo ? 'Envío de notificaciones reanudado exitosamente.' : 'Envío de notificaciones pausado exitosamente.');
+      if (activo) {
+        toast.success(msg, 'Envíos Reanudados');
+      } else {
+        toast.warning(msg, 'Envíos Pausados');
+      }
+      await fetchHealthData('email');
+    } catch (e) {
+      console.error("Error al alternar estado de notificaciones:", e);
+      toast.error(e.response?.data?.message || "No se pudo cambiar el estado de las notificaciones.", "Error");
+    } finally {
+      setTogglingNotificaciones(false);
+    }
+  };
+
   // Form para nueva copropiedad
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoNit, setNuevoNit] = useState('');
@@ -106,6 +128,57 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   const [emailAdmin, setEmailAdmin] = useState('');
   const [telefonoAdmin, setTelefonoAdmin] = useState('');
   const [assigningAdmin, setAssigningAdmin] = useState(false);
+  const [adminVerificadoInfo, setAdminVerificadoInfo] = useState(null);
+  const [verificandoAdmin, setVerificandoAdmin] = useState(false);
+
+  const verificarAdminPorCedula = async (doc, copId) => {
+    const cedulaLimpia = (doc || '').trim();
+    if (!cedulaLimpia || cedulaLimpia.length < 5) {
+      setAdminVerificadoInfo(null);
+      return;
+    }
+    try {
+      setVerificandoAdmin(true);
+      const res = await api.get(`/copropiedades/verificar-admin?documento=${encodeURIComponent(cedulaLimpia)}&copropiedadId=${copId || ''}`);
+      if (res.data && res.data.existe) {
+        setAdminVerificadoInfo(res.data);
+        setNombreAdmin(res.data.nombreCompleto || '');
+        setEmailAdmin(res.data.email || '');
+        setTelefonoAdmin(res.data.telefono || '');
+      } else {
+        // La cédula no existe: limpiar formulario para evitar que queden datos precargados de otra persona
+        setAdminVerificadoInfo({ existe: false });
+        setNombreAdmin('');
+        setEmailAdmin('');
+        setTelefonoAdmin('');
+      }
+    } catch (e) {
+      console.warn("No se pudo verificar cédula del admin:", e);
+      setAdminVerificadoInfo(null);
+    } finally {
+      setVerificandoAdmin(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!selectedCopropiedadId) return;
+    const cedulaLimpia = (documentoAdmin || '').trim();
+    if (cedulaLimpia.length === 0) {
+      setAdminVerificadoInfo(null);
+      setNombreAdmin('');
+      setEmailAdmin('');
+      setTelefonoAdmin('');
+      return;
+    }
+    if (cedulaLimpia.length < 5) {
+      setAdminVerificadoInfo(null);
+      return;
+    }
+    const timer = setTimeout(() => {
+      verificarAdminPorCedula(documentoAdmin, selectedCopropiedadId);
+    }, 450);
+    return () => clearTimeout(timer);
+  }, [documentoAdmin, selectedCopropiedadId]);
 
   const fetchCopropiedades = async (pageTarget = pageCop, sizeTarget = pageSizeCop) => {
     setLoading(true);
@@ -182,8 +255,10 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
   const handleAbrirFormAdmin = (cop, admin) => {
     if (selectedCopropiedadId === cop.id) {
       setSelectedCopropiedadId(null);
+      setAdminVerificadoInfo(null);
     } else {
       setSelectedCopropiedadId(cop.id);
+      setAdminVerificadoInfo(null);
       setDocumentoAdmin(admin?.documento || '');
       setNombreAdmin(admin?.nombreCompleto || '');
       setEmailAdmin(admin?.email || '');
@@ -233,6 +308,7 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
       setNombreAdmin('');
       setEmailAdmin('');
       setTelefonoAdmin('');
+      setAdminVerificadoInfo(null);
       setSelectedCopropiedadId(null);
       fetchCopropiedades();
     } catch (err) {
@@ -385,16 +461,66 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => fetchHealthData('email')}
-                          disabled={refreshingEmailCard}
-                          className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                          title="Actualizar notificaciones"
-                        >
-                          <RefreshCw className={`w-4 h-4 ${refreshingEmailCard ? 'animate-spin text-purple-400' : ''}`} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {/* Interruptor Interactivo On/Off para Envíos */}
+                          <button
+                            type="button"
+                            onClick={handleToggleNotificaciones}
+                            disabled={togglingNotificaciones}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer disabled:opacity-50 ${
+                              (liveHealth?.notificacionesEmail?.activo ?? true)
+                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-sm'
+                                : 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20 hover:border-rose-500/50 shadow-sm'
+                            }`}
+                            title={(liveHealth?.notificacionesEmail?.activo ?? true) ? 'Haga clic para pausar el despacho de correos' : 'Haga clic para reanudar el despacho de correos'}
+                          >
+                            <span className={`w-2 h-2 rounded-full ${
+                              (liveHealth?.notificacionesEmail?.activo ?? true)
+                                ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+                                : 'bg-rose-400 animate-ping'
+                            }`} />
+                            {togglingNotificaciones ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (liveHealth?.notificacionesEmail?.activo ?? true) ? (
+                              <span className="flex items-center gap-1">
+                                <Pause className="w-3 h-3 text-emerald-400" /> Activo
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1">
+                                <Play className="w-3 h-3 text-rose-400" /> Pausado
+                              </span>
+                            )}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => fetchHealthData('email')}
+                            disabled={refreshingEmailCard}
+                            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                            title="Actualizar notificaciones"
+                          >
+                            <RefreshCw className={`w-4 h-4 ${refreshingEmailCard ? 'animate-spin text-purple-400' : ''}`} />
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Alerta visible si el servicio está pausado */}
+                      {liveHealth?.notificacionesEmail && liveHealth.notificacionesEmail.activo === false && (
+                        <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-between text-xs text-rose-200">
+                          <div className="flex items-center gap-2">
+                            <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0" />
+                            <span>El despacho automático está <strong>pausado</strong>. Los correos se acumularán en <em>Pendientes</em>.</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={handleToggleNotificaciones}
+                            disabled={togglingNotificaciones}
+                            className="ml-2 px-2.5 py-1 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40 rounded-lg text-[11px] font-bold cursor-pointer transition-all flex items-center gap-1"
+                          >
+                            <Play className="w-3 h-3" /> Reanudar
+                          </button>
+                        </div>
+                      )}
 
                       {/* Metricas por Estado */}
                       <div className="grid grid-cols-3 gap-3 pt-1">
@@ -983,18 +1109,80 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
 
                     {/* Desplegable para editar o crear Admin */}
                     {selectedCopropiedadId === cop.id && (
-                      <div className="p-4 bg-slate-900 border border-indigo-500/40 rounded-2xl space-y-3 text-xs animate-fadeIn">
+                      <div className="p-4 bg-slate-900 border border-indigo-500/40 rounded-2xl space-y-3.5 text-xs animate-fadeIn">
                         <div className="flex items-center justify-between pb-2 border-b border-slate-800">
                           <span className="font-bold text-amber-300 flex items-center gap-1.5">
                             <User className="w-4 h-4 text-amber-400" />
-                            {adminActual ? 'Editar Datos del Administrador' : 'Crear o Vincular Administrador de Conjunto'}
+                            {adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh
+                              ? 'Vincular Administrador Existente a esta PH'
+                              : adminActual
+                              ? 'Editar Datos del Administrador'
+                              : 'Crear o Vincular Administrador de Conjunto'}
                           </span>
+                          {verificandoAdmin && (
+                            <span className="text-[11px] text-indigo-400 flex items-center gap-1 font-semibold animate-pulse">
+                              <RefreshCw className="w-3 h-3 animate-spin" /> Verificando cédula...
+                            </span>
+                          )}
                         </div>
+
+                        {/* Banner Informativo si el Admin ya existe en otras copropiedades */}
+                        {adminVerificadoInfo?.existe && adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh && (
+                          <div className="p-3.5 bg-indigo-950/70 border border-indigo-500/50 rounded-2xl space-y-2 shadow-lg shadow-indigo-950/40 animate-fadeIn">
+                            <div className="flex items-center gap-2 text-indigo-300 font-bold">
+                              <Building2 className="w-4 h-4 text-indigo-400 shrink-0" />
+                              <span>¡Administrador existente detectado!</span>
+                            </div>
+                            <p className="text-xs text-slate-300 leading-relaxed">
+                              La persona con cédula <strong className="text-white font-mono">{documentoAdmin}</strong> (<span className="text-amber-300 font-semibold">{adminVerificadoInfo.nombreCompleto}</span>) ya está asignada como administrador en:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 py-1">
+                              {adminVerificadoInfo.copropiedades.map((nom, idx) => (
+                                <span key={idx} className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold text-[11px] flex items-center gap-1">
+                                  <Building className="w-3 h-3 text-indigo-400" /> {nom}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="p-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-[11px] flex items-center gap-2 font-medium">
+                              <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
+                              <span>Sus datos personales han sido precargados. Al confirmar, quedará asociado también como administrador de <strong>{cop.nombre}</strong> conservando su acceso en sus demás conjuntos.</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Banner si ya está asignado a esta misma copropiedad */}
+                        {adminVerificadoInfo?.existe && adminVerificadoInfo?.yaAsignadoAEstaPh && (
+                          <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 rounded-xl text-emerald-300 flex items-center gap-2 text-xs animate-fadeIn">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <span>Esta persona ya es el administrador asignado actualmente a este conjunto. Los cambios guardados actualizarán sus datos de contacto.</span>
+                          </div>
+                        )}
+
+                        {/* Banner si existe la persona en el sistema pero aún no es admin de ninguna copropiedad */}
+                        {adminVerificadoInfo?.existe && !adminVerificadoInfo?.yaAsignadoAEstaPh && (!adminVerificadoInfo?.copropiedades || adminVerificadoInfo.copropiedades.length === 0) && (
+                          <div className="p-2.5 bg-cyan-950/40 border border-cyan-500/40 rounded-xl text-cyan-200 flex items-center gap-2 text-[11px] animate-fadeIn">
+                            <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                            <span>Se encontraron datos registrados para esta cédula ({adminVerificadoInfo.nombreCompleto}). Han sido precargados en el formulario.</span>
+                          </div>
+                        )}
+
+                        {/* Banner si la cédula no existe en el sistema */}
+                        {adminVerificadoInfo?.existe === false && documentoAdmin.trim().length >= 5 && !verificandoAdmin && (
+                          <div className="p-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 flex items-center gap-2 text-[11px] animate-fadeIn">
+                            <UserPlus className="w-4 h-4 text-indigo-400 shrink-0" />
+                            <span>Cédula no registrada en el sistema. El formulario ha sido limpiado para registrar los datos del nuevo administrador.</span>
+                          </div>
+                        )}
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-slate-300 font-semibold mb-1 flex items-center gap-1">
-                              <User className="w-3 h-3 text-indigo-400" /> Documento / Cédula *
+                            <label className="block text-slate-300 font-semibold mb-1 flex items-center justify-between">
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3 text-indigo-400" /> Documento / Cédula *
+                              </span>
+                              {verificandoAdmin && (
+                                <span className="text-[10px] text-indigo-400 font-normal">Buscando...</span>
+                              )}
                             </label>
                             <input
                               type="text"
@@ -1051,16 +1239,34 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
 
                         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 pt-2 border-t border-slate-800">
                           <p className="text-[10px] text-slate-400 max-w-sm">
-                            * Los datos editados se actualizarán inmediatamente para el administrador asignado a esta copropiedad.
+                            * {adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh
+                              ? 'Al confirmar, este usuario tendrá acceso de administración simultáneo a sus demás conjuntos y a este.'
+                              : 'Los datos editados se actualizarán inmediatamente para el administrador asignado a esta copropiedad.'}
                           </p>
 
                           <button
                             onClick={() => handleAsignarAdmin(cop.id)}
-                            disabled={assigningAdmin || !documentoAdmin.trim()}
-                            className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shadow-indigo-500/20 shrink-0"
+                            disabled={assigningAdmin || !documentoAdmin.trim() || verificandoAdmin}
+                            className={`px-4 py-2 font-bold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 shadow-md shrink-0 text-white ${
+                              adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh
+                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/20'
+                                : 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 shadow-indigo-500/20'
+                            }`}
                           >
-                            {assigningAdmin ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
-                            {assigningAdmin ? 'Guardando...' : 'Guardar Datos Administrador'}
+                            {assigningAdmin ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh ? (
+                              <UserPlus className="w-4 h-4" />
+                            ) : (
+                              <Edit3 className="w-4 h-4" />
+                            )}
+                            {assigningAdmin
+                              ? 'Guardando...'
+                              : adminVerificadoInfo?.copropiedades?.length > 0 && !adminVerificadoInfo?.yaAsignadoAEstaPh
+                              ? 'Asociar a esta Copropiedad'
+                              : adminActual
+                              ? 'Guardar Datos Administrador'
+                              : 'Asignar Administrador'}
                           </button>
                         </div>
                       </div>

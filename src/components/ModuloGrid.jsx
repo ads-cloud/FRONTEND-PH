@@ -67,6 +67,8 @@ export default function ModuloGrid({ user, onSelectModule, searchTerm }) {
   }, [user?.documento]);
 
   const modulosFiltrados = modulos.filter((m) => {
+    // Excluir Perfil de la parrilla de módulos (solo accesible desde el botón "Mi Perfil" en Navbar)
+    if (m.codigo === 'PERFIL') return false;
     if (!searchTerm || !searchTerm.trim()) return true;
     const term = searchTerm.toLowerCase().trim();
     return (
