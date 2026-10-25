@@ -1686,16 +1686,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
                             <td className="py-3 px-4 text-right flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => setUnidadResidentesModal(u)}
-                                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-950/80 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/60 hover:border-indigo-400 transition-all flex items-center gap-1 cursor-pointer"
-                                title="Gestionar habitantes, integrantes y apoderado de la unidad"
-                              >
-                                <Users className="w-3.5 h-3.5" />
-                                <span>Residentes</span>
-                              </button>
-
-                              <button
-                                type="button"
                                 onClick={() => handleAbrirEditarUnidad(u)}
                                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-700 hover:border-indigo-500 transition-all cursor-pointer"
                                 title="Editar datos del inmueble, propietario o apoderado"

@@ -24,7 +24,11 @@ import {
   Building2,
   Pencil,
   HelpCircle,
-  X
+  X,
+  Save,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from 'lucide-react';
 import api from '../api/axiosClient';
 import { ConfirmModal, useToast } from './NotificationToast';
@@ -45,7 +49,22 @@ export default function CopropiedadesModulo({ user }) {
 
   // Vista activa: null = Lista de Inmuebles, u = Detalle del Inmueble Seleccionado
   const [selectedUnidad, setSelectedUnidad] = useState(null);
-  const [activeTabDetail, setActiveTabDetail] = useState('residentes'); // 'residentes' | 'vehiculos' | 'mascotas'
+  const [activeTabDetail, setActiveTabDetail] = useState('inmueble'); // 'inmueble' | 'residentes' | 'vehiculos' | 'mascotas'
+
+  // Estados del Formulario de Edición de Datos del Inmueble
+  const [editTorre, setEditTorre] = useState('');
+  const [editNumeroUnidad, setEditNumeroUnidad] = useState('');
+  const [editCoeficiente, setEditCoeficiente] = useState('');
+  const [editCedulaProp, setEditCedulaProp] = useState('');
+  const [editNombreProp, setEditNombreProp] = useState('');
+  const [editEmailProp, setEditEmailProp] = useState('');
+  const [editTelProp, setEditTelProp] = useState('');
+  const [editDocApoderado, setEditDocApoderado] = useState('');
+  const [editNombreApoderado, setEditNombreApoderado] = useState('');
+  const [editEmailApoderado, setEditEmailApoderado] = useState('');
+  const [editTelApoderado, setEditTelApoderado] = useState('');
+  const [showApoderadoEdit, setShowApoderadoEdit] = useState(false);
+  const [savingInmueble, setSavingInmueble] = useState(false);
 
   // Modal / Form Crear Inmueble Individual
   const [showCrearUnidadForm, setShowCrearUnidadForm] = useState(false);
@@ -173,13 +192,102 @@ export default function CopropiedadesModulo({ user }) {
     }
   };
 
+  const cargarDatosInmuebleForm = (u) => {
+    if (!u) return;
+    setEditTorre(u.torre || '');
+    setEditNumeroUnidad(u.numeroUnidad || '');
+    setEditCoeficiente(u.coeficiente !== undefined && u.coeficiente !== null ? u.coeficiente : '');
+    setEditCedulaProp(u.propietario?.cedula || u.propietarioCedula || '');
+    setEditNombreProp(u.propietario?.nombreCompleto || u.propietarioNombre || '');
+    setEditEmailProp(u.propietario?.email || u.propietarioEmail || '');
+    setEditTelProp(u.propietario?.telefono || u.propietarioTelefono || '');
+    setEditDocApoderado(u.apoderado?.documento || u.apoderadoDocumento || '');
+    setEditNombreApoderado(u.apoderado?.nombreCompleto || u.apoderadoNombre || '');
+    setEditEmailApoderado(u.apoderado?.email || u.apoderadoEmail || '');
+    setEditTelApoderado(u.apoderado?.telefono || u.apoderadoTelefono || '');
+    setShowApoderadoEdit(Boolean(u.apoderado?.documento || u.apoderadoDocumento || u.apoderado?.nombreCompleto || u.apoderadoNombre));
+  };
+
   useEffect(() => {
     if (selectedUnidad?.id) {
+      cargarDatosInmuebleForm(selectedUnidad);
       fetchHabitantesUnidad(selectedUnidad.id);
       fetchVehiculosUnidad(selectedUnidad.id);
       fetchMascotasUnidad(selectedUnidad.id);
     }
   }, [selectedUnidad?.id]);
+
+  const handleGuardarInmueble = async (e) => {
+    e.preventDefault();
+    if (!selectedUnidad) return;
+
+    if (!editTorre.trim() || !editNumeroUnidad.trim()) {
+      showNotif('error', 'La torre y el apartamento son obligatorios.');
+      return;
+    }
+    if (!editCedulaProp.trim()) {
+      showNotif('error', 'La cédula del propietario es obligatoria.');
+      return;
+    }
+
+    try {
+      setSavingInmueble(true);
+      const payload = {
+        torre: editTorre.trim(),
+        numeroUnidad: editNumeroUnidad.trim(),
+        coeficiente: parseFloat(editCoeficiente) || 0,
+        cedulaPropietario: editCedulaProp.trim(),
+        nombrePropietario: editNombreProp.trim(),
+        emailPropietario: editEmailProp.trim(),
+        telefonoPropietario: editTelProp.trim(),
+        documentoApoderado: editDocApoderado.trim(),
+        nombreApoderado: editNombreApoderado.trim(),
+        emailApoderado: editEmailApoderado.trim(),
+        telefonoApoderado: editTelApoderado.trim(),
+      };
+
+      const res = await api.put(`/unidades/${selectedUnidad.id}`, payload);
+      const unidadActualizada = res.data;
+
+      const unidadFusionada = {
+        ...selectedUnidad,
+        ...unidadActualizada,
+        torre: editTorre.trim(),
+        numeroUnidad: editNumeroUnidad.trim(),
+        coeficiente: parseFloat(editCoeficiente) || 0,
+        propietarioCedula: editCedulaProp.trim(),
+        propietarioNombre: editNombreProp.trim(),
+        propietarioEmail: editEmailProp.trim(),
+        propietarioTelefono: editTelProp.trim(),
+        propietario: {
+          ...(selectedUnidad.propietario || {}),
+          cedula: editCedulaProp.trim(),
+          nombreCompleto: editNombreProp.trim(),
+          email: editEmailProp.trim(),
+          telefono: editTelProp.trim()
+        },
+        apoderadoDocumento: editDocApoderado.trim(),
+        apoderadoNombre: editNombreApoderado.trim(),
+        apoderadoEmail: editEmailApoderado.trim(),
+        apoderadoTelefono: editTelApoderado.trim(),
+      };
+
+      setSelectedUnidad(unidadFusionada);
+      cargarDatosInmuebleForm(unidadFusionada);
+
+      // Actualizar lista en pantalla
+      setUnidades((prev) =>
+        prev.map((u) => (u.id === selectedUnidad.id ? { ...u, ...unidadFusionada } : u))
+      );
+
+      showNotif('success', `Inmueble Torre ${unidadFusionada.torre} - Apt ${unidadFusionada.numeroUnidad} actualizado exitosamente.`);
+    } catch (err) {
+      console.error("Error al actualizar inmueble:", err);
+      showNotif('error', err.response?.data?.message || 'Error al guardar cambios del inmueble.');
+    } finally {
+      setSavingInmueble(false);
+    }
+  };
 
   const handleCrearUnidad = async (e) => {
     e.preventDefault();
@@ -1053,13 +1161,14 @@ export default function CopropiedadesModulo({ user }) {
                         type="button"
                         onClick={() => {
                           setSelectedUnidad(u);
-                          setActiveTabDetail('residentes');
+                          setActiveTabDetail('inmueble');
+                          cargarDatosInmuebleForm(u);
                         }}
                         className="w-full py-2 px-3 bg-slate-950 hover:bg-emerald-950/60 text-emerald-300 border border-slate-800 hover:border-emerald-500/50 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer group-hover:bg-emerald-950/40"
                       >
                         <span className="flex items-center gap-1.5">
-                          <Users className="w-4 h-4 text-emerald-400" />
-                          Gestionar Inmueble (Residentes, Vehículos)
+                          <Building2 className="w-4 h-4 text-emerald-400" />
+                          Gestionar Inmueble (Ficha, Residentes, Vehículos)
                         </span>
                         <ChevronRight className="w-4 h-4 text-slate-500 group-hover:translate-x-1 transition-transform" />
                       </button>
@@ -1117,11 +1226,23 @@ export default function CopropiedadesModulo({ user }) {
           </div>
 
           {/* Menú de Pestañas en la Misma Pantalla */}
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setActiveTabDetail('inmueble')}
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${activeTabDetail === 'inmueble'
+                ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 shadow-md'
+                : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                }`}
+            >
+              <Building2 className="w-4 h-4 text-emerald-400" />
+              <span>Datos del Inmueble</span>
+            </button>
+
             <button
               type="button"
               onClick={() => setActiveTabDetail('residentes')}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${activeTabDetail === 'residentes'
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${activeTabDetail === 'residentes'
                 ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 shadow-md'
                 : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
@@ -1133,7 +1254,7 @@ export default function CopropiedadesModulo({ user }) {
             <button
               type="button"
               onClick={() => setActiveTabDetail('vehiculos')}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${activeTabDetail === 'vehiculos'
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${activeTabDetail === 'vehiculos'
                 ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 shadow-md'
                 : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
@@ -1145,7 +1266,7 @@ export default function CopropiedadesModulo({ user }) {
             <button
               type="button"
               onClick={() => setActiveTabDetail('mascotas')}
-              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${activeTabDetail === 'mascotas'
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all flex items-center gap-2 cursor-pointer shrink-0 ${activeTabDetail === 'mascotas'
                 ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 shadow-md'
                 : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
                 }`}
@@ -1155,7 +1276,308 @@ export default function CopropiedadesModulo({ user }) {
             </button>
           </div>
 
-          {/* CONTENIDO PESTAÑA 1: INTEGRANTES Y RESIDENTES */}
+          {/* CONTENIDO PESTAÑA 0 (PRIMERA PESTAÑA): DATOS Y EDICIÓN DEL INMUEBLE */}
+          {activeTabDetail === 'inmueble' && (
+            <div className="space-y-6 animate-fadeIn">
+              <form onSubmit={handleGuardarInmueble} className="space-y-6">
+                
+                {/* Cabecera Informativa con Resumen Rápido */}
+                <div className="p-5 bg-gradient-to-r from-slate-900/90 via-slate-900/70 to-slate-950/90 border border-slate-800 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5">
+                    <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
+                      <Building2 className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                        Ficha Técnica del Inmueble
+                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-bold">
+                          ID #{selectedUnidad.id}
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-0.5">
+                        Edita la nomenclatura, alícuota de copropiedad, datos de contacto del propietario titular y apoderado.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => cargarDatosInmuebleForm(selectedUnidad)}
+                      disabled={savingInmueble}
+                      className="px-3.5 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      title="Revertir cambios a los valores guardados"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Revertir</span>
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingInmueble}
+                      className="px-5 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-950/50 hover:shadow-emerald-900/50 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {savingInmueble ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          <span>Guardando...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          <span>Guardar Cambios</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  
+                  {/* Bloque 1: Nomenclatura y Coeficiente */}
+                  <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-3xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+                      <Building className="w-4 h-4 text-emerald-400" />
+                      <h4 className="font-bold text-emerald-300 text-xs uppercase tracking-wider">
+                        1. Identificación y Coeficiente
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Torre / Bloque <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editTorre}
+                          onChange={(e) => setEditTorre(e.target.value)}
+                          placeholder="Ej: 1, A, Torre 2"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Apartamento / Unidad <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editNumeroUnidad}
+                          onChange={(e) => setEditNumeroUnidad(e.target.value)}
+                          placeholder="Ej: 101, 502"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Coeficiente (%) <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="number"
+                          step="0.0001"
+                          required
+                          value={editCoeficiente}
+                          onChange={(e) => setEditCoeficiente(e.target.value)}
+                          placeholder="Ej: 1.2500"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-emerald-300 font-mono font-bold text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="p-3 bg-slate-900/50 border border-slate-800/60 rounded-2xl flex items-center gap-3">
+                      <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <div className="text-[11px] text-slate-400">
+                        El coeficiente determina el peso de voto en las asambleas generales y el porcentaje de participación del inmueble sobre las áreas comunes.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bloque 2: Propietario Titular */}
+                  <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-3xl space-y-4">
+                    <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+                      <Crown className="w-4 h-4 text-emerald-400" />
+                      <h4 className="font-bold text-emerald-300 text-xs uppercase tracking-wider">
+                        2. Propietario Titular Registrado
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Cédula / Documento <span className="text-rose-400">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editCedulaProp}
+                          onChange={(e) => setEditCedulaProp(e.target.value)}
+                          placeholder="Número de cédula"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white font-mono text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Nombre Completo
+                        </label>
+                        <input
+                          type="text"
+                          value={editNombreProp}
+                          onChange={(e) => setEditNombreProp(e.target.value)}
+                          placeholder="Nombre y apellidos"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Correo Electrónico
+                        </label>
+                        <input
+                          type="email"
+                          value={editEmailProp}
+                          onChange={(e) => setEditEmailProp(e.target.value)}
+                          placeholder="propietario@ejemplo.com"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                          Teléfono / Celular
+                        </label>
+                        <input
+                          type="text"
+                          value={editTelProp}
+                          onChange={(e) => setEditTelProp(e.target.value)}
+                          placeholder="300 123 4567"
+                          className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-emerald-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Bloque 3: Representación / Apoderado */}
+                <div className="p-5 bg-slate-950/80 border border-amber-500/20 rounded-3xl space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-amber-400" />
+                      <h4 className="font-bold text-amber-300 text-xs uppercase tracking-wider">
+                        3. Poder de Representación y Apoderado (Opcional)
+                      </h4>
+                      {(editDocApoderado || editNombreApoderado) && (
+                        <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+                          {selectedUnidad.poderAprobado ? 'Poder Aprobado' : 'Poder Pendiente'}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowApoderadoEdit(!showApoderadoEdit)}
+                      className="text-xs font-semibold text-amber-300 hover:text-amber-200 flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{showApoderadoEdit ? 'Ocultar campos' : 'Configurar apoderado'}</span>
+                      {showApoderadoEdit ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </div>
+
+                  {showApoderadoEdit && (
+                    <div className="space-y-4 pt-1 animate-fadeIn">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                        <div>
+                          <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                            Cédula Apoderado
+                          </label>
+                          <input
+                            type="text"
+                            value={editDocApoderado}
+                            onChange={(e) => setEditDocApoderado(e.target.value)}
+                            placeholder="Dejar vacío si no aplica"
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl text-white font-mono text-xs focus:outline-none transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                            Nombre Apoderado
+                          </label>
+                          <input
+                            type="text"
+                            value={editNombreApoderado}
+                            onChange={(e) => setEditNombreApoderado(e.target.value)}
+                            placeholder="Nombre del apoderado"
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                            Correo Electrónico
+                          </label>
+                          <input
+                            type="email"
+                            value={editEmailApoderado}
+                            onChange={(e) => setEditEmailApoderado(e.target.value)}
+                            placeholder="apoderado@ejemplo.com"
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-400 font-semibold mb-1">
+                            Teléfono
+                          </label>
+                          <input
+                            type="text"
+                            value={editTelApoderado}
+                            onChange={(e) => setEditTelApoderado(e.target.value)}
+                            placeholder="300 777 8899"
+                            className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 focus:border-amber-500 rounded-xl text-white text-xs focus:outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-slate-900/60 border border-amber-500/20 rounded-2xl">
+                        <p className="text-[11px] text-slate-400">
+                          {selectedUnidad.poderAprobado
+                            ? 'Este apoderado cuenta con el poder verificado y aprobado para ejercer voz y voto en las asambleas.'
+                            : 'Al asignar o cambiar un apoderado, el poder queda en revisión hasta ser aprobado por la administración.'}
+                        </p>
+
+                        {(editDocApoderado?.trim() && selectedUnidad.id) && (
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const nuevoEstado = !selectedUnidad.poderAprobado;
+                                await api.patch(`/unidades/${selectedUnidad.id}/aprobar-poder?aprobado=${nuevoEstado}`);
+                                setSelectedUnidad(prev => ({ ...prev, poderAprobado: nuevoEstado }));
+                                setUnidades(prev => prev.map(u => u.id === selectedUnidad.id ? { ...u, poderAprobado: nuevoEstado } : u));
+                                showNotif('success', `Poder ${nuevoEstado ? 'Aprobado' : 'Revocado'} exitosamente.`);
+                              } catch (err) {
+                                showNotif('error', err.response?.data?.message || 'Error al cambiar estado del poder.');
+                              }
+                            }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0 ${
+                              selectedUnidad.poderAprobado
+                                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                            }`}
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>{selectedUnidad.poderAprobado ? 'Revocar Aprobación' : 'Aprobar Poder Ahora'}</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+              </form>
+            </div>
+          )}
+
+          {/* CONTENIDO PESTAÑA 2: INTEGRANTES Y RESIDENTES */}
           {activeTabDetail === 'residentes' && (
             <div className="space-y-6">
 
