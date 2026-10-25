@@ -235,11 +235,11 @@ export default function App() {
                   health={health}
                 />
               </div>
-            ) : selectedModule === 'gestion_modulos' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SUPER_ADMIN')) ? (
+            ) : selectedModule === 'gestion_modulos' && user.roles?.includes('ROLE_ADMIN') ? (
               <div key={`view-gestionmodulos-${user.documento}`}>
                 <GestionModulosModulo user={user} />
               </div>
-            ) : selectedModule === 'copropiedades' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SUPER_ADMIN')) ? (
+            ) : selectedModule === 'copropiedades' && user.roles?.includes('ROLE_ADMIN') ? (
               <div key={`view-copropiedades-${user.documento}`}>
                 <CopropiedadesModulo user={user} />
               </div>
@@ -247,7 +247,7 @@ export default function App() {
               <div key={`view-mi-inmueble-${user?.documento}`}>
                 <MiInmuebleModulo user={user} />
               </div>
-            ) : (selectedModule === 'configuracion' || selectedModule === 'configuracion_ph') && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SUPER_ADMIN')) ? (
+            ) : (selectedModule === 'configuracion' || selectedModule === 'configuracion_ph') && user.roles?.includes('ROLE_ADMIN') ? (
               <div key={`view-configuracionph-${user.documento}`}>
                 <ConfiguracionPhModulo user={user} />
               </div>
@@ -263,6 +263,16 @@ export default function App() {
               <div key={`view-superadminmodulos-${user.documento}`}>
                 <SuperAdminModulosModulo user={user} />
               </div>
+            ) : selectedModule === 'asambleas' ? (
+              user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_GESTOR') ? (
+                <div key={`view-admin-${user.documento}`}>
+                  <AdminDashboard user={user} asambleaId={1} />
+                </div>
+              ) : (
+                <div key={`view-voter-${user?.documento || 'voter'}`}>
+                  <CopropietarioVotingView user={user} />
+                </div>
+              )
             ) : activeView === 'superadmin' && user.roles?.includes('ROLE_SUPER_ADMIN') ? (
               <div key={`view-superadmin-${user.documento}`}>
                 <SuperAdminDashboard health={health} defaultTab="monitoreo" />
