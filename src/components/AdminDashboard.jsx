@@ -7,13 +7,11 @@ import { ToastContainer, ConfirmModal, useToast } from './NotificationToast';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { Vote, Play, Square, PieChart, ShieldCheck, CheckCircle2, XCircle, AlertTriangle, Users, UserPlus, ChevronDown, ChevronUp, ChevronRight, ArrowRight, Search, PlusCircle, Building, Calendar, FileText, X, Upload, Download, FileSpreadsheet, Clock, Edit3, Ban, Lock, ListOrdered, Mail } from 'lucide-react';
 
-import HabitantesUnidadModal from './HabitantesUnidadModal';
 import GestorPlantillasEmail from './GestorPlantillasEmail';
 
 export default function AdminDashboard({ user = null, asambleaId = null }) {
   const isGestor = user?.roles?.includes('ROLE_GESTOR') && !user?.roles?.includes('ROLE_ADMIN') && !user?.roles?.includes('ROLE_SUPER_ADMIN');
   const [quorum, setQuorum] = useState(null);
-  const [unidadResidentesModal, setUnidadResidentesModal] = useState(null);
   const [preguntas, setPreguntas] = useState([]);
   const [selectedPreguntaId, setSelectedPreguntaId] = useState(null);
   const [resultados, setResultados] = useState(null);
@@ -205,75 +203,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
   const [telefonoApoderadoNuevaUnidad, setTelefonoApoderadoNuevaUnidad] = useState('');
   const [crearUnidadLoading, setCrearUnidadLoading] = useState(false);
   const [showApoderadoCrear, setShowApoderadoCrear] = useState(false);
-
-  // Estados para Modal de Editar Inmueble / Propietario / Apoderado
-  const [showEditarUnidadModal, setShowEditarUnidadModal] = useState(false);
-  const [unidadEditar, setUnidadEditar] = useState(null);
-  const [editTorre, setEditTorre] = useState('');
-  const [editNumeroUnidad, setEditNumeroUnidad] = useState('');
-  const [editCoeficiente, setEditCoeficiente] = useState('');
-  const [editCedulaProp, setEditCedulaProp] = useState('');
-  const [editNombreProp, setEditNombreProp] = useState('');
-  const [editEmailProp, setEditEmailProp] = useState('');
-  const [editTelProp, setEditTelProp] = useState('');
-  const [editDocApoderado, setEditDocApoderado] = useState('');
-  const [editNombreApoderado, setEditNombreApoderado] = useState('');
-  const [editEmailApoderado, setEditEmailApoderado] = useState('');
-  const [editTelApoderado, setEditTelApoderado] = useState('');
-  const [editarUnidadLoading, setEditarUnidadLoading] = useState(false);
-  const [showApoderadoEdit, setShowApoderadoEdit] = useState(false);
-
-  const handleAbrirEditarUnidad = (u) => {
-    setUnidadEditar(u);
-    setEditTorre(u.torre || '');
-    setEditNumeroUnidad(u.numeroUnidad || '');
-    setEditCoeficiente(u.coeficiente || '');
-    setEditCedulaProp(u.propietario?.cedula || '');
-    setEditNombreProp(u.propietario?.nombreCompleto || '');
-    setEditEmailProp(u.propietario?.email || '');
-    setEditTelProp(u.propietario?.telefono || '');
-    setEditDocApoderado(u.apoderado?.documento || '');
-    setEditNombreApoderado(u.apoderado?.nombreCompleto || '');
-    setEditEmailApoderado(u.apoderado?.email || '');
-    setEditTelApoderado(u.apoderado?.telefono || '');
-    setShowApoderadoEdit(Boolean(u.apoderado?.documento || u.apoderado?.nombreCompleto));
-    setShowEditarUnidadModal(true);
-  };
-
-  const handleGuardarEditarUnidad = async (e) => {
-    e.preventDefault();
-    if (!unidadEditar) return;
-
-    try {
-      setEditarUnidadLoading(true);
-      const res = await api.put(`/unidades/${unidadEditar.id}`, {
-        torre: editTorre.trim(),
-        numeroUnidad: editNumeroUnidad.trim(),
-        coeficiente: parseFloat(editCoeficiente) || 0,
-        cedulaPropietario: editCedulaProp.trim(),
-        nombrePropietario: editNombreProp.trim(),
-        emailPropietario: editEmailProp.trim(),
-        telefonoPropietario: editTelProp.trim(),
-        documentoApoderado: editDocApoderado.trim(),
-        nombreApoderado: editNombreApoderado.trim(),
-        emailApoderado: editEmailApoderado.trim(),
-        telefonoApoderado: editTelApoderado.trim(),
-      });
-
-      notifySuccess("Inmueble Actualizado", `Inmueble Torre ${res.data.torre} - Apt ${res.data.numeroUnidad} guardado exitosamente.`);
-      setShowEditarUnidadModal(false);
-      setUnidadEditar(null);
-      await fetchUnidades();
-      if (currentAsambleaId) {
-        await fetchAsistentes(currentAsambleaId);
-        await fetchQuorum(currentAsambleaId);
-      }
-    } catch (err) {
-      notifyError("Error al actualizar inmueble", err.response?.data?.message || err.message);
-    } finally {
-      setEditarUnidadLoading(false);
-    }
-  };
 
   // Estados para Cargue Masivo Excel
   const [archivoCargueMasivo, setArchivoCargueMasivo] = useState(null);
@@ -1537,7 +1466,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
                     <th className="py-3 px-4">Contacto (Informativo)</th>
                     <th className="py-3 px-4">Estado del Poder</th>
                     <th className="py-3 px-4 text-center">Asistencia Presencial</th>
-                    {!isGestor && <th className="py-3 px-4 text-right">Acciones</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -1680,20 +1608,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
                               </button>
                             )}
                           </td>
-
-                          {/* Acciones (Solo para Admin) */}
-                          {!isGestor && (
-                            <td className="py-3 px-4 text-right flex items-center justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => handleAbrirEditarUnidad(u)}
-                                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-indigo-300 border border-slate-700 hover:border-indigo-500 transition-all cursor-pointer"
-                                title="Editar datos del inmueble, propietario o apoderado"
-                              >
-                                ✏️ Editar
-                              </button>
-                            </td>
-                          )}
                         </tr>
                       );
                     })}
@@ -2087,7 +2001,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
                           link.click();
                           link.remove();
                         } catch (err) {
-                          console.warn("Falling back to static template download:", err);
                           const link = document.createElement('a');
                           link.href = '/plantillas/plantilla_cargue_unidades.xlsx';
                           link.setAttribute('download', 'plantilla_cargue_unidades.xlsx');
@@ -2171,218 +2084,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
                 </div>
               </form>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL 3: Editar Inmueble, Propietario y Apoderado */}
-      {showEditarUnidadModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 pb-20 sm:pb-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
-          <div className="glass-panel w-full max-w-lg p-6 rounded-3xl border border-indigo-500/30 shadow-2xl space-y-4 relative max-h-[85vh] overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => {
-                setShowEditarUnidadModal(false);
-                setUnidadEditar(null);
-              }}
-              className="absolute top-4 right-4 p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
-                <Building className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Editar Inmueble, Propietario y Apoderado</h3>
-                <p className="text-xs text-slate-400">Torre {unidadEditar?.torre} - Apt {unidadEditar?.numeroUnidad}</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleGuardarEditarUnidad} className="space-y-4 pt-2 text-xs">
-              {/* Sección 1: Datos del Inmueble */}
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
-                <h4 className="font-bold text-indigo-300 text-xs uppercase tracking-wider">1. Datos del Inmueble</h4>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Torre *</label>
-                    <input
-                      type="text"
-                      required
-                      value={editTorre}
-                      onChange={(e) => setEditTorre(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Apto / Unidad *</label>
-                    <input
-                      type="text"
-                      required
-                      value={editNumeroUnidad}
-                      onChange={(e) => setEditNumeroUnidad(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Coeficiente (%) *</label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      required
-                      value={editCoeficiente}
-                      onChange={(e) => setEditCoeficiente(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección 2: Datos del Propietario */}
-              <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
-                <h4 className="font-bold text-emerald-300 text-xs uppercase tracking-wider">2. Propietario Registrado</h4>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Cédula Propietario *</label>
-                    <input
-                      type="text"
-                      required
-                      value={editCedulaProp}
-                      onChange={(e) => setEditCedulaProp(e.target.value)}
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Nombre Completo</label>
-                    <input
-                      type="text"
-                      value={editNombreProp}
-                      onChange={(e) => setEditNombreProp(e.target.value)}
-                      placeholder="Nombre del propietario"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Email</label>
-                    <input
-                      type="email"
-                      value={editEmailProp}
-                      onChange={(e) => setEditEmailProp(e.target.value)}
-                      placeholder="correo@ejemplo.com"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-400 font-semibold mb-1">Teléfono</label>
-                    <input
-                      type="text"
-                      value={editTelProp}
-                      onChange={(e) => setEditTelProp(e.target.value)}
-                      placeholder="3001234567"
-                      className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-emerald-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección 3: Representación / Apoderado */}
-              <div className="p-3 bg-slate-950/60 border border-amber-500/30 rounded-xl space-y-2">
-                <button
-                  type="button"
-                  onClick={() => setShowApoderadoEdit(!showApoderadoEdit)}
-                  className="w-full flex items-center justify-between text-left focus:outline-none cursor-pointer py-0.5"
-                >
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-bold text-amber-300 text-xs uppercase tracking-wider">3. Poder de Representación (Apoderado)</h4>
-                    {(editDocApoderado || editNombreApoderado) ? (
-                      <span className="text-[10px] px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full font-medium">
-                        Asignado
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-slate-400 font-normal">
-                        {showApoderadoEdit ? '(Clic para ocultar)' : '(Clic para desplegar)'}
-                      </span>
-                    )}
-                  </div>
-                  {showApoderadoEdit ? (
-                    <ChevronUp className="w-4 h-4 text-amber-400 shrink-0" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-amber-400 shrink-0" />
-                  )}
-                </button>
-
-                {showApoderadoEdit && (
-                  <div className="space-y-3 pt-2 border-t border-slate-800/80 animate-fadeIn">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Cédula del Apoderado</label>
-                        <input
-                          type="text"
-                          value={editDocApoderado}
-                          onChange={(e) => setEditDocApoderado(e.target.value)}
-                          placeholder="Dejar vacío si no aplica"
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white font-mono focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Nombre Completo Apoderado</label>
-                        <input
-                          type="text"
-                          value={editNombreApoderado}
-                          onChange={(e) => setEditNombreApoderado(e.target.value)}
-                          placeholder="Nombre del apoderado"
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Correo Electrónico Apoderado</label>
-                        <input
-                          type="email"
-                          value={editEmailApoderado}
-                          onChange={(e) => setEditEmailApoderado(e.target.value)}
-                          placeholder="apoderado@ejemplo.com"
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 font-semibold mb-1">Teléfono Apoderado</label>
-                        <input
-                          type="text"
-                          value={editTelApoderado}
-                          onChange={(e) => setEditTelApoderado(e.target.value)}
-                          placeholder="3007778899"
-                          className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-slate-400">
-                      * Si asignas o cambias un apoderado, el poder quedará en estado <span className="text-amber-300 font-semibold">En Revisión / Pendiente</span> para ser verificado y aprobado por la administración.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowEditarUnidadModal(false);
-                    setUnidadEditar(null);
-                  }}
-                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={editarUnidadLoading}
-                  className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 hover:brightness-110 transition-all flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {editarUnidadLoading ? 'Guardando...' : 'Guardar Cambios'}
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}
@@ -2729,17 +2430,6 @@ export default function AdminDashboard({ user = null, asambleaId = null }) {
           notifyError={notifyError}
           showConfirmDialog={showConfirmDialog}
           onUpdateAsamblea={fetchAsambleas}
-        />
-      )}
-
-      {/* Modal de Residentes e Integrantes por Unidad Privada */}
-      {unidadResidentesModal && (
-        <HabitantesUnidadModal
-          unidad={unidadResidentesModal}
-          onClose={() => {
-            setUnidadResidentesModal(null);
-            fetchUnidades();
-          }}
         />
       )}
 

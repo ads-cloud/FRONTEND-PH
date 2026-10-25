@@ -38,7 +38,6 @@ export default function CopropiedadesModulo({ user }) {
   const [unidades, setUnidades] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [notif, setNotif] = useState(null);
   const [confirmConfig, setConfirmConfig] = useState(null);
 
   // Estados de Paginación
@@ -659,17 +658,6 @@ export default function CopropiedadesModulo({ user }) {
 
       {/* Modal de Confirmación Estilizado */}
       <ConfirmModal confirmConfig={confirmConfig} onClose={() => setConfirmConfig(null)} />
-
-      {/* Notificaciones Flotantes */}
-      {notif && (
-        <div className={`p-4 rounded-2xl border text-xs font-bold animate-fadeIn flex items-center gap-2.5 ${notif.type === 'success'
-          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-          : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-          }`}>
-          {notif.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />}
-          <span>{notif.text}</span>
-        </div>
-      )}
 
       {/* VISTA 1: DIRECTORIO GENERAL DE INMUEBLES (selectedUnidad === null) */}
       {!selectedUnidad ? (
