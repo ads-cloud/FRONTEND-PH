@@ -114,6 +114,28 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
     }
   };
 
+  const [togglingPhNotifs, setTogglingPhNotifs] = useState({});
+
+  const handleToggleNotificacionesPh = async (copId) => {
+    try {
+      setTogglingPhNotifs(prev => ({ ...prev, [copId]: true }));
+      const res = await api.patch(`/copropiedades/${copId}/toggle-notificaciones`);
+      const nuevoEstado = res.data?.notificacionesHabilitadas;
+      const phNombre = res.data?.nombre || '';
+      if (nuevoEstado) {
+        toast.success(`Notificaciones por correo habilitadas para ${phNombre}`, 'Envíos PH Activos');
+      } else {
+        toast.warning(`Notificaciones por correo pausadas para ${phNombre}`, 'Envíos PH Pausados');
+      }
+      setCopropiedades(prev => prev.map(c => c.id === copId ? { ...c, notificacionesHabilitadas: nuevoEstado } : c));
+    } catch (e) {
+      console.error("Error al alternar notificaciones de PH:", e);
+      toast.error(e.response?.data?.message || "No se pudo cambiar el estado de las notificaciones para este conjunto.", "Error");
+    } finally {
+      setTogglingPhNotifs(prev => ({ ...prev, [copId]: false }));
+    }
+  };
+
   // Form para nueva copropiedad
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoNit, setNuevoNit] = useState('');
@@ -991,6 +1013,28 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
                               ⚠ Sin Admin
                             </span>
                           )}
+
+                          {/* Toggle de Notificaciones por Copropiedad */}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleNotificacionesPh(cop.id)}
+                            disabled={togglingPhNotifs[cop.id]}
+                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 transition-all border cursor-pointer disabled:opacity-50 ${
+                              cop.notificacionesHabilitadas !== false
+                                ? 'bg-indigo-500/10 text-indigo-300 border-indigo-500/30 hover:bg-indigo-500/20'
+                                : 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                            }`}
+                            title={cop.notificacionesHabilitadas !== false ? 'Notificaciones por correo activas para este PH. Haz clic para pausar.' : 'Notificaciones por correo pausadas para este PH. Haz clic para reanudar.'}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${cop.notificacionesHabilitadas !== false ? 'bg-indigo-400' : 'bg-rose-400'}`} />
+                            {togglingPhNotifs[cop.id] ? (
+                              <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                            ) : cop.notificacionesHabilitadas !== false ? (
+                              <span>Envíos PH Activos</span>
+                            ) : (
+                              <span>Envíos PH Pausados</span>
+                            )}
+                          </button>
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2.5 text-xs text-slate-400 font-medium pt-0.5">
