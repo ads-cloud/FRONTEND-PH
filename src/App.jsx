@@ -235,9 +235,9 @@ export default function App() {
                   health={health}
                 />
               </div>
-            ) : selectedModule === 'gestion_modulos' && user.roles?.includes('ROLE_ADMIN') ? (
+            ) : selectedModule === 'gestion_modulos' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SUPER_ADMIN')) ? (
               <div key={`view-gestionmodulos-${user.documento}`}>
-                <GestionModulosModulo user={user} />
+                <GestionModulosModulo user={user} onBack={() => setSelectedModule(null)} />
               </div>
             ) : selectedModule === 'copropiedades' && user.roles?.includes('ROLE_ADMIN') ? (
               <div key={`view-copropiedades-${user.documento}`}>

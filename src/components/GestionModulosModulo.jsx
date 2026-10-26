@@ -12,19 +12,22 @@ import {
   SlidersHorizontal,
   Search,
   Check,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  Crown
 } from 'lucide-react';
 import api from '../api/axiosClient';
 import { useToast } from './NotificationToast';
 
 const ROLES_DISPONIBLES = [
+  { key: 'ROLE_SUPER_ADMIN', label: 'Super Administrador', icon: Crown, color: 'text-purple-400' },
   { key: 'ROLE_ADMIN', label: 'Administrador PH', icon: ShieldCheck, color: 'text-indigo-400' },
   { key: 'ROLE_GESTOR', label: 'Gestor de Registro', icon: UserCheck, color: 'text-emerald-400' },
   { key: 'ROLE_COPROPIETARIO', label: 'Copropietario / Votante', icon: Users, color: 'text-cyan-400' },
   { key: 'ROLE_APODERADO', label: 'Apoderado', icon: Building, color: 'text-amber-400' },
 ];
 
-export default function GestionModulosModulo({ user }) {
+export default function GestionModulosModulo({ user, onBack }) {
   const [modulos, setModulos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
@@ -42,7 +45,7 @@ export default function GestionModulosModulo({ user }) {
   const fetchModulosAdmin = async () => {
     try {
       setLoading(true);
-      const activeCopId = user?.copropiedadId || user?.copropietarioInfo?.copropiedadId;
+      const activeCopId = user?.copropiedadId || user?.copropietarioInfo?.copropiedadId || sessionStorage.getItem('active_copropiedad_id') || localStorage.getItem('active_copropiedad_id');
       const url = activeCopId ? `/modulos/admin?copropiedadId=${activeCopId}` : '/modulos/admin';
       const res = await api.get(url);
       setModulos(res.data);
@@ -124,8 +127,18 @@ export default function GestionModulosModulo({ user }) {
       {/* Encabezado del Módulo */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Volver a Módulos</span>
+            </button>
+          )}
           <h1 className="text-2xl font-extrabold text-white flex items-center gap-2.5">
-            <div className="p-2 bg-purple-600/20 text-purple-400 rounded-xl border border-purple-500/30">
+            <div className="p-2 bg-amber-600/20 text-amber-400 rounded-xl border border-amber-500/30">
               <SlidersHorizontal className="w-6 h-6" />
             </div>
             Administración de Módulos y Permisos
@@ -247,7 +260,7 @@ export default function GestionModulosModulo({ user }) {
                     Roles Autorizados para Acceder:
                   </span>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                     {ROLES_DISPONIBLES.map((r) => {
                       const Icono = r.icon;
                       const hasRol = rolesSet.has(r.key);

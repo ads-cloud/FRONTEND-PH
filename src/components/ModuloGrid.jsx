@@ -17,7 +17,9 @@ import {
   Sparkles,
   CheckCircle2,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Sliders,
+  SlidersHorizontal
 } from 'lucide-react';
 import api from '../api/axiosClient';
 
@@ -32,6 +34,9 @@ const ICON_MAP = {
   MessageSquare: MessageSquare,
   Activity: Activity,
   Settings: Settings,
+  Sliders: Sliders,
+  SlidersHorizontal: SlidersHorizontal,
+  ShieldCheck: ShieldCheck,
 };
 
 export default function ModuloGrid({ user, onSelectModule, searchTerm }) {
@@ -119,8 +124,8 @@ export default function ModuloGrid({ user, onSelectModule, searchTerm }) {
                 key={mod.id || mod.codigo}
                 onClick={() => mod.activo && onSelectModule(targetRoute)}
                 className={`glass-panel p-6 rounded-3xl border ${mod.borderColor || 'border-slate-800'} ${mod.shadowColor || 'shadow-xl'} shadow-xl relative group transition-all duration-300 flex flex-col justify-between h-full ${mod.activo
-                    ? 'cursor-pointer hover:-translate-y-1 hover:bg-slate-900/90'
-                    : 'opacity-70 cursor-not-allowed bg-slate-950/30'
+                  ? 'cursor-pointer hover:-translate-y-1 hover:bg-slate-900/90'
+                  : 'opacity-70 cursor-not-allowed bg-slate-950/30'
                   }`}
               >
                 <div className="space-y-4">
@@ -130,11 +135,10 @@ export default function ModuloGrid({ user, onSelectModule, searchTerm }) {
                       <IconoComp className="w-6 h-6" />
                     </div>
 
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${
-                      mod.activo 
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' 
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border flex items-center gap-1 ${mod.activo
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
                         : 'bg-slate-800 text-slate-400 border-slate-700'
-                    }`}>
+                      }`}>
                       {mod.activo ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Clock className="w-3 h-3 text-amber-400" />}
                       {mod.activo ? (mod.badge && mod.badge !== 'Próximamente' ? mod.badge : 'Disponible') : (mod.badge || 'Próximamente')}
                     </span>

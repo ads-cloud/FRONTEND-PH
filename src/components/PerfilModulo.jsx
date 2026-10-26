@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Building, 
-  ShieldCheck, 
-  CheckCircle2, 
-  RefreshCw, 
-  KeyRound, 
-  ChevronDown, 
-  ChevronUp, 
-  LogOut, 
-  Crown, 
-  UserCheck, 
+import {
+  User,
+  Mail,
+  Phone,
+  Building,
+  ShieldCheck,
+  CheckCircle2,
+  RefreshCw,
+  KeyRound,
+  ChevronDown,
+  ChevronUp,
+  LogOut,
+  Crown,
+  UserCheck,
   Sparkles,
   Lock,
   FileText
@@ -156,11 +156,10 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
 
       {/* Notificación Flotante de Acción */}
       {mensaje && (
-        <div className={`p-4 rounded-2xl border text-xs font-bold animate-fadeIn flex items-center gap-2 ${
-          mensaje.type === 'success' 
-            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' 
+        <div className={`p-4 rounded-2xl border text-xs font-bold animate-fadeIn flex items-center gap-2 ${mensaje.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
             : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-        }`}>
+          }`}>
           {mensaje.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <Lock className="w-5 h-5 text-rose-400 shrink-0" />}
           <span>{mensaje.text}</span>
         </div>
@@ -168,7 +167,7 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
 
       {/* Grid Principal de Datos */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Columna Izquierda: Tarjeta de Identidad */}
         <div className="md:col-span-1 space-y-6">
           <div className="glass-panel p-6 rounded-3xl border border-slate-800 shadow-xl text-center space-y-4 relative overflow-hidden bg-gradient-to-b from-slate-900/90 to-slate-950/90">
@@ -182,12 +181,11 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
             </div>
 
             <div className="pt-2">
-              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                isSuperAdmin ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
-                isAdmin ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
-                isGestor ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
-                'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
-              }`}>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${isSuperAdmin ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
+                  isAdmin ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
+                    isGestor ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                      'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                }`}>
                 {isSuperAdmin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
                 {isAdmin && <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />}
                 {isGestor && <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
@@ -239,7 +237,7 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
         {/* Columna Derecha: Formulario de Actualización */}
         <div className="md:col-span-2 space-y-6">
           <form onSubmit={handleGuardarPerfil} className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 shadow-xl space-y-6 bg-slate-900/90">
-            
+
             {/* Sección 1: Datos de Contacto */}
             <div className="space-y-4">
               <h4 className="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
