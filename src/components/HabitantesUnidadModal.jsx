@@ -192,7 +192,7 @@ export default function HabitantesUnidadModal({ unidad, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-6xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
 
         {/* Modal Header */}
         <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/40 shrink-0">

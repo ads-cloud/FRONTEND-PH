@@ -123,7 +123,7 @@ export default function GestionModulosModulo({ user, onBack }) {
   const modulosActivos = modulosVisibles.filter(m => m.activo).length;
 
   return (
-    <div className="space-y-8 animate-fadeIn max-w-5xl mx-auto">
+    <div className="space-y-8 animate-fadeIn w-full">
       {/* Encabezado del Módulo */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>

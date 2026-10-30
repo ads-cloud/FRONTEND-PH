@@ -1,11 +1,20 @@
 @import "tailwindcss";
 
+html {
+  font-size: 18px; /* Incremento global de 2 puntos (~2.6px / 16px -> 18px) para mayor legibilidad */
+}
+
 @layer base {
   body {
     @apply text-slate-100 font-sans antialiased min-h-screen selection:bg-cyan-500 selection:text-white;
     background: linear-gradient(135deg, #000000 0%, #021a44 35%, #0b54bd 70%, #000511 100%) fixed !important;
   }
 }
+
+/* Escalado de 2 puntos para clases tipográficas fijas/arbitrarias */
+.text-\[10px\] { font-size: 12px !important; }
+.text-\[11px\] { font-size: 13px !important; }
+.text-\[12px\] { font-size: 14px !important; }
 
 /* Fondo degradado vibrante e intenso para la pantalla de login */
 .bg-tech-gradient {

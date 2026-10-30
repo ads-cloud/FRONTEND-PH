@@ -363,7 +363,7 @@ export default function ConfiguracionPhModulo({ user }) {
           ) : !copropiedad ? (
             <p className="p-8 text-center text-slate-500 text-xs">No se encontró información de la copropiedad activa.</p>
           ) : (
-            <form onSubmit={handleGuardarCopropiedad} className="space-y-4 text-xs max-w-2xl">
+            <form onSubmit={handleGuardarCopropiedad} className="space-y-4 text-xs w-full max-w-4xl">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">Nombre del Conjunto *</label>

@@ -1393,7 +1393,7 @@ export default function SuperAdminDashboard({ health, defaultTab = 'monitoreo' }
 
           {/* Cuerpo Scrollable con Grid de Tarjetas */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
-            <div className="max-w-7xl mx-auto space-y-6">
+            <div className="w-full max-w-[95%] xl:max-w-[90%] mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
                 <p className="text-xs text-slate-400">
                   Selecciona qué módulos estará autorizada a visualizar y operar la administración de esta PH.

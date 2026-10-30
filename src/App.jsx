@@ -209,7 +209,7 @@ export default function App() {
         )}
 
         {/* Main Container */}
-        <main className={`flex-1 w-full mx-auto relative z-0 ${!user ? 'p-4 sm:p-6 lg:p-8' : 'max-w-7xl pt-20 pb-8 px-4 sm:px-6 lg:px-8'}`}>
+        <main className={`flex-1 mx-auto relative z-0 ${!user ? 'w-full p-4 sm:p-6 lg:p-8' : 'w-[90%] max-w-[90%] pt-20 pb-8 px-2 sm:px-4 lg:px-6'}`}>
 
           {/* View Switch: Require Authentication */}
           <ErrorBoundary>

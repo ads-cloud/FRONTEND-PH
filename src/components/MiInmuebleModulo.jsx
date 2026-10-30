@@ -119,7 +119,7 @@ export default function MiInmuebleModulo({ user }) {
   }, [selectedUnidad?.id]);
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 animate-fadeIn w-full pb-12">
       
       {/* Notificaciones */}
       {notif && (

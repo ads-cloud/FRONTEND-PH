@@ -654,7 +654,7 @@ export default function CopropiedadesModulo({ user }) {
   const totalCoeficiente = unidades.reduce((acc, curr) => acc + (curr.coeficiente || 0), 0);
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-6xl mx-auto pb-12">
+    <div className="space-y-6 animate-fadeIn w-full pb-12">
 
       {/* Modal de Confirmación Estilizado */}
       <ConfirmModal confirmConfig={confirmConfig} onClose={() => setConfirmConfig(null)} />

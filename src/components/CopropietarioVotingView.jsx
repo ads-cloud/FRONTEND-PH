@@ -537,7 +537,7 @@ export default function CopropietarioVotingView({ user: initialUser }) {
 
   // CASO 4: Asistencia confirmada -> Votaciones Habilitadas en vivo
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full space-y-6 animate-fadeIn">
       
       {/* Header Panel */}
       <div className="glass-panel rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-xl space-y-3">
