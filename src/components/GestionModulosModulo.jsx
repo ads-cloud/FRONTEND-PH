@@ -14,7 +14,8 @@ import {
   Check,
   AlertCircle,
   ArrowLeft,
-  Crown
+  Crown,
+  Briefcase
 } from 'lucide-react';
 import api from '../api/axiosClient';
 import { useToast } from './NotificationToast';
@@ -22,6 +23,7 @@ import { useToast } from './NotificationToast';
 const ROLES_DISPONIBLES = [
   { key: 'ROLE_SUPER_ADMIN', label: 'Super Administrador', icon: Crown, color: 'text-purple-400' },
   { key: 'ROLE_ADMIN', label: 'Administrador PH', icon: ShieldCheck, color: 'text-indigo-400' },
+  { key: 'ROLE_SECRETARIA', label: 'Secretaría / Asistente', icon: Briefcase, color: 'text-pink-400' },
   { key: 'ROLE_GESTOR', label: 'Gestor de Registro', icon: UserCheck, color: 'text-emerald-400' },
   { key: 'ROLE_COPROPIETARIO', label: 'Copropietario / Votante', icon: Users, color: 'text-cyan-400' },
   { key: 'ROLE_APODERADO', label: 'Apoderado', icon: Building, color: 'text-amber-400' },

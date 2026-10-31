@@ -68,7 +68,7 @@ const getInitialUser = () => {
 
 const getInitialActiveView = (u) => {
   if (u?.roles?.includes('ROLE_SUPER_ADMIN')) return 'superadmin';
-  if (u?.roles?.includes('ROLE_ADMIN')) return 'admin';
+  if (u?.roles?.includes('ROLE_ADMIN') || u?.roles?.includes('ROLE_SECRETARIA') || u?.roles?.includes('ROLE_GESTOR')) return 'admin';
   return 'voter';
 };
 
@@ -97,7 +97,7 @@ export default function App() {
 
           if (fetchedUser.roles?.includes('ROLE_SUPER_ADMIN')) {
             setActiveView('superadmin');
-          } else if (fetchedUser.roles?.includes('ROLE_ADMIN')) {
+          } else if (fetchedUser.roles?.includes('ROLE_ADMIN') || fetchedUser.roles?.includes('ROLE_SECRETARIA') || fetchedUser.roles?.includes('ROLE_GESTOR')) {
             setActiveView('admin');
           } else {
             setActiveView('voter');
@@ -156,7 +156,7 @@ export default function App() {
     setSelectedModule(null); // Siempre iniciar en la parrilla de módulos principal al hacer login
     if (userData.roles?.includes('ROLE_SUPER_ADMIN')) {
       setActiveView('superadmin');
-    } else if (userData.roles?.includes('ROLE_ADMIN') || userData.roles?.includes('ROLE_GESTOR')) {
+    } else if (userData.roles?.includes('ROLE_ADMIN') || userData.roles?.includes('ROLE_SECRETARIA') || userData.roles?.includes('ROLE_GESTOR')) {
       setActiveView('admin');
     } else {
       setActiveView('voter');
@@ -235,7 +235,7 @@ export default function App() {
                   health={health}
                 />
               </div>
-            ) : selectedModule === 'gestion_modulos' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SUPER_ADMIN')) ? (
+            ) : selectedModule === 'gestion_modulos' && user.roles?.includes('ROLE_SUPER_ADMIN') ? (
               <div key={`view-gestionmodulos-${user.documento}`}>
                 <GestionModulosModulo user={user} onBack={() => setSelectedModule(null)} />
               </div>
@@ -264,7 +264,7 @@ export default function App() {
                 <SuperAdminModulosModulo user={user} />
               </div>
             ) : selectedModule === 'asambleas' ? (
-              user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_GESTOR') ? (
+              user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SECRETARIA') || user.roles?.includes('ROLE_GESTOR') ? (
                 <div key={`view-admin-${user.documento}`}>
                   <AdminDashboard user={user} asambleaId={1} />
                 </div>
@@ -277,7 +277,7 @@ export default function App() {
               <div key={`view-superadmin-${user.documento}`}>
                 <SuperAdminDashboard health={health} defaultTab="monitoreo" />
               </div>
-            ) : activeView === 'admin' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_GESTOR')) ? (
+            ) : activeView === 'admin' && (user.roles?.includes('ROLE_ADMIN') || user.roles?.includes('ROLE_SECRETARIA') || user.roles?.includes('ROLE_GESTOR')) ? (
               <div key={`view-admin-${user.documento}`}>
                 <AdminDashboard user={user} asambleaId={1} />
               </div>

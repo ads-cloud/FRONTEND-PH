@@ -15,7 +15,8 @@ import {
   UserCheck,
   Sparkles,
   Lock,
-  FileText
+  FileText,
+  Briefcase
 } from 'lucide-react';
 import api from '../api/axiosClient';
 import { useToast } from './NotificationToast';
@@ -135,6 +136,7 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
 
   const isSuperAdmin = user?.roles?.includes('ROLE_SUPER_ADMIN');
   const isAdmin = user?.roles?.includes('ROLE_ADMIN');
+  const isSecretaria = user?.roles?.includes('ROLE_SECRETARIA');
   const isGestor = user?.roles?.includes('ROLE_GESTOR');
 
   return (
@@ -183,13 +185,15 @@ export default function PerfilModulo({ user, onUserUpdate, onLogout, health }) {
             <div className="pt-2">
               <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${isSuperAdmin ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' :
                   isAdmin ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40' :
-                    isGestor ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
-                      'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
+                    isSecretaria ? 'bg-pink-500/20 text-pink-300 border-pink-500/40' :
+                      isGestor ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' :
+                        'bg-cyan-500/20 text-cyan-300 border-cyan-500/40'
                 }`}>
                 {isSuperAdmin && <Crown className="w-3.5 h-3.5 text-amber-400" />}
                 {isAdmin && <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />}
+                {isSecretaria && <Briefcase className="w-3.5 h-3.5 text-pink-400" />}
                 {isGestor && <UserCheck className="w-3.5 h-3.5 text-emerald-400" />}
-                {isSuperAdmin ? 'SuperAdministrador' : isAdmin ? 'Administrador PH' : isGestor ? 'Gestor de Registro' : 'Copropietario / Votante'}
+                {isSuperAdmin ? 'SuperAdministrador' : isAdmin ? 'Administrador PH' : isSecretaria ? 'Secretaría PH' : isGestor ? 'Gestor de Registro' : 'Copropietario / Votante'}
               </span>
             </div>
 

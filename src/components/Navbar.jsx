@@ -70,6 +70,7 @@ export default function Navbar({ activeView, setActiveView, user, onLogout, heal
   const getRolBadge = () => {
     if (user?.roles?.includes('ROLE_SUPER_ADMIN')) return 'SuperAdmin Global';
     if (user?.roles?.includes('ROLE_ADMIN')) return 'Administrador PH';
+    if (user?.roles?.includes('ROLE_SECRETARIA')) return 'Secretaría PH';
     if (user?.roles?.includes('ROLE_GESTOR')) return 'Gestor de Registro';
     return 'Copropietario / Residente';
   };

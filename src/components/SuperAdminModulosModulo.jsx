@@ -36,6 +36,7 @@ const GRADIENT_OPTIONS = [
 const ALL_ROLES = [
   { code: 'ROLE_SUPER_ADMIN', label: 'SuperAdministrador' },
   { code: 'ROLE_ADMIN', label: 'Administrador PH' },
+  { code: 'ROLE_SECRETARIA', label: 'Secretaría / Asistente' },
   { code: 'ROLE_GESTOR', label: 'Gestor de Contenido' },
   { code: 'ROLE_COPROPIETARIO', label: 'Copropietario / Propietario' },
   { code: 'ROLE_APODERADO', label: 'Apoderado / Residente' },
